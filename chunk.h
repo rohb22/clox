@@ -4,22 +4,38 @@
 #include "common.h"
 #include "value.h"
 
+
+// defined instructions
 typedef enum {
+    OP_CONSTANT_LONG,
     OP_CONSTANT,
     OP_RETURN,
 } OpCode;
 
+
+// RLE implementation of lines
+typedef struct {
+    int offset;
+    int line;
+} LineStart;
+
+// definition of a chunk
 typedef struct {
     int count;
     int capacity;
     uint8_t* code;
-    int* lines;
+    int lineCount;
+    int lineCapacity;
+    LineStart* lines;
     ValueArray constants;
 } Chunk;
+
 
 void initChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 void freeChunk(Chunk* chunk);
+void writeConstant(Chunk* chunk, Value value, int line);
 int addConstant(Chunk* chunk, Value value);
+int getLine(Chunk* chunk, int instruction);
 #endif
 
