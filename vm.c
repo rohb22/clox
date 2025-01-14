@@ -3,16 +3,38 @@
 #include "common.h"
 #include "vm.h"
 #include "debug.h"
+#include "memory.h"
 
 VM vm;
 
+void GROW_VM() {
+    if (vm.stackCapacity == 0) {
+        vm.stackCapacity = 256;
+        vm.stack = GROW_ARRAY(Value, vm.stack, 0, 256);
+        vm.stackTop = vm.stack;
+    }
+    else {
+        int oldCapacity = vm.stackCapacity;
+        vm.stackCapacity = GROW_CAPACITY(oldCapacity);
+        int offset = vm.stackTop - vm.stack;
+        vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, vm.stackCapacity);
+        vm.stackTop = vm.stack + offset;
+    }
+}
+
+
 void push(Value value) {
+    if(vm.stackCapacity <= vm.stackCount+ 1) {
+        GROW_VM();
+    }
     *vm.stackTop = value;
     vm.stackTop++;
+    vm.stackCount++;
 }
 
 Value pop() {
     vm.stackTop--;
+    vm.stackCount--;
     return *vm.stackTop;
 }
 
@@ -65,11 +87,14 @@ static InterpretResult run() {
 }
 
 void initVM() {
+    vm.stack = NULL;
+    vm.stackCapacity = 0;
+    vm.stackCount = 0;
     resetStack();
 }
 
 void freeVM() {
-
+    FREE_ARRAY(Value, vm.stack, vm.stackCount);
 }
 
 InterpretResult interpret(Chunk* chunk) {
